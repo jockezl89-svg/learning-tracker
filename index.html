@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rollout">
+<meta name="theme-color" content="#142129">
+<title>Rollout: план навчання</title>
+<style>
+  :root{
+    --bg: #142129;
+    --panel: #1b2c37;
+    --panel-line: #2a4150;
+    --text: #EDEDE8;
+    --text-dim: #93a7b1;
+    --linux: #E8A33D;
+    --git: #F05033;
+    --docker: #2CA5E0;
+    --python: #FFD43B;
+    --ansible: #EE0000;
+    --ok: #5FBF87;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
+    padding:18px 14px 60px;
+  }
+  h1,h2,h3{ font-family:'JetBrains Mono','SF Mono',Consolas,monospace; font-weight:600; margin:0; }
+  .head{
+    margin-bottom:18px;
+  }
+  .head .kicker{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--text-dim);
+    letter-spacing:.02em;
+  }
+  .head h1{
+    font-size:22px;
+    margin-top:4px;
+    line-height:1.3;
+  }
+
+  /* streak block */
+  .streak{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .streak-num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:34px;
+    font-weight:700;
+    line-height:1;
+  }
+  .streak-label{
+    font-size:12px;
+    color:var(--text-dim);
+    margin-top:4px;
+  }
+  .checkin-btn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    background:var(--ok);
+    color:#0d1a12;
+    border:none;
+    border-radius:8px;
+    padding:12px 16px;
+    font-weight:700;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:transform .12s ease, opacity .12s ease;
+  }
+  .checkin-btn:active{ transform:scale(0.96); }
+  .checkin-btn.done{
+    background:transparent;
+    color:var(--ok);
+    border:1px solid var(--ok);
+  }
+  .streak-warn{
+    font-size:12px;
+    color:var(--linux);
+    margin-top:6px;
+  }
+
+  /* topic cards */
+  .topic{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-left:4px solid var(--accent);
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .topic-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:2px;
+  }
+  .topic-name{
+    font-size:16px;
+  }
+  .topic-status{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--accent);
+  }
+  .topic-desc{
+    font-size:12.5px;
+    color:var(--text-dim);
+    margin:6px 0 14px;
+    line-height:1.5;
+  }
+  .weeks{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+  }
+  .week{
+    border:1px solid var(--panel-line);
+    border-radius:7px;
+    padding:10px 4px;
+    text-align:center;
+    cursor:pointer;
+    user-select:none;
+    transition:background .12s ease, border-color .12s ease;
+  }
+  .week .n{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--text-dim);
+    display:block;
+    margin-bottom:6px;
+  }
+  .week .mark{
+    font-size:15px;
+    display:block;
+    height:16px;
+  }
+  .week.done{
+    background:color-mix(in srgb, var(--accent) 18%, transparent);
+    border-color:var(--accent);
+  }
+  .week.done .mark{ color:var(--accent); }
+
+  .bar-track{
+    height:5px;
+    background:var(--panel-line);
+    border-radius:3px;
+    margin-top:14px;
+    overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;
+    background:var(--accent);
+    border-radius:3px;
+    transition:width .25s ease;
+  }
+
+  .footnote{
+    font-size:11.5px;
+    color:var(--text-dim);
+    text-align:center;
+    margin-top:24px;
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="kicker">DEPLOY STATUS · план навчання</div>
+  <h1>Linux → Git → Docker → Ansible</h1>
+</div>
+
+<div class="streak">
+  <div>
+    <div class="streak-num" id="streakNum">0</div>
+    <div class="streak-label">днів поспіль</div>
+    <div class="streak-warn" id="streakWarn" style="display:none;"></div>
+  </div>
+  <button class="checkin-btn" id="checkinBtn">Я позанимався сьогодні</button>
+</div>
+
+<div id="topics"></div>
+
+<div class="footnote">Мінімум для заліку дня — 5 хвилин.<br>Один пропущений день — нормально. Два поспіль — рвуть стрик.</div>
+
+<script>
+const TOPICS = [
+  { id:'linux', name:'Linux', accent:'var(--linux)', desc:'Файлова система, права доступу, systemd, мережа (ip/netplan), логи' },
+  { id:'git', name:'Git', accent:'var(--git)', desc:'Модель даних, гілки, merge vs rebase, конвенції комітів' },
+  { id:'python', name:'Python', accent:'var(--python)', desc:'Синтаксис, скрипти, requests/API, парсинг конфігів' },
+  { id:'docker', name:'Docker / Compose', accent:'var(--docker)', desc:'Образи, volume, мережі, healthcheck, troubleshooting контейнерів' },
+  { id:'ansible', name:'Ansible', accent:'var(--ansible)', desc:'Playbook і role з нуля, inventory, структура проєкту' },
+];
+const WEEKS_PER_TOPIC = 4;
+const STORAGE_KEY = 'learning-tracker-state';
+
+let state = { streak: { count:0, total:0, lastCheckin:null }, weeks:{} };
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function daysBetween(a,b){
+  const da = new Date(a+'T00:00:00');
+  const db = new Date(b+'T00:00:00');
+  return Math.round((db-da)/86400000);
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      state = JSON.parse(raw);
+      if(!state.weeks) state.weeks = {};
+      if(!state.streak) state.streak = { count:0, total:0, lastCheckin:null };
+    }
+  }catch(e){ /* нема збережених даних — стартуємо з нуля */ }
+  render();
+}
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){ console.error('storage save failed', e); }
+}
+
+function render(){
+  renderStreak();
+  renderTopics();
+}
+
+function renderStreak(){
+  document.getElementById('streakNum').textContent = state.streak.count;
+  const btn = document.getElementById('checkinBtn');
+  const doneToday = state.streak.lastCheckin === todayStr();
+  btn.textContent = doneToday ? '✓ Сьогодні зроблено' : 'Я позанимався сьогодні';
+  btn.classList.toggle('done', doneToday);
+
+  const warn = document.getElementById('streakWarn');
+  if(state.streak.lastCheckin && !doneToday){
+    const gap = daysBetween(state.streak.lastCheckin, todayStr());
+    if(gap === 1){
+      warn.style.display = 'block';
+      warn.textContent = 'Вчора був пропуск — сьогодні варто позайматись, щоб не порвати стрик двічі поспіль';
+    } else if(gap > 1){
+      warn.style.display = 'none';
+    } else {
+      warn.style.display = 'none';
+    }
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
+function renderTopics(){
+  const container = document.getElementById('topics');
+  container.innerHTML = '';
+  TOPICS.forEach((topic, ti) => {
+    const doneCount = countDone(topic.id);
+    const card = document.createElement('div');
+    card.className = 'topic';
+    card.style.setProperty('--accent', topic.accent);
+
+    card.innerHTML = `
+      <div class="topic-top">
+        <div class="topic-name">${topic.name}</div>
+        <div class="topic-status">${doneCount}/${WEEKS_PER_TOPIC} тижнів</div>
+      </div>
+      <div class="topic-desc">${topic.desc}</div>
+      <div class="weeks">
+        ${Array.from({length:WEEKS_PER_TOPIC}).map((_,wi)=>{
+          const done = isDone(topic.id, wi);
+          return `<div class="week ${done?'done':''}" data-topic="${topic.id}" data-week="${wi}">
+                    <span class="n">ТИЖ ${wi+1}</span>
+                    <span class="mark">${done?'✓':''}</span>
+                  </div>`;
+        }).join('')}
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(doneCount/WEEKS_PER_TOPIC*100)}%;"></div></div>
+    `;
+    container.appendChild(card);
+  });
+
+  container.querySelectorAll('.week').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const t = el.dataset.topic, w = el.dataset.week;
+      const key = t+'-'+w;
+      state.weeks[key] = !state.weeks[key];
+      saveState();
+      render();
+    });
+  });
+}
+
+function isDone(topicId, weekIdx){ return !!state.weeks[topicId+'-'+weekIdx]; }
+function countDone(topicId){
+  let c=0;
+  for(let w=0; w<WEEKS_PER_TOPIC; w++) if(isDone(topicId,w)) c++;
+  return c;
+}
+
+document.getElementById('checkinBtn').addEventListener('click', ()=>{
+  const today = todayStr();
+  if(state.streak.lastCheckin === today) return;
+
+  const gap = state.streak.lastCheckin ? daysBetween(state.streak.lastCheckin, today) : null;
+  if(gap === 1 || gap === 2 || gap === null){
+    state.streak.count += 1;
+  } else {
+    state.streak.count = 1;
+  }
+  state.streak.total += 1;
+  state.streak.lastCheckin = today;
+  saveState();
+  render();
+});
+
+loadState();
+</script>
+</body>
+</html>
