@@ -247,7 +247,7 @@ function renderStreak(){
   document.getElementById('streakNum').textContent = state.streak.count;
   const btn = document.getElementById('checkinBtn');
   const doneToday = state.streak.lastCheckin === todayStr();
-  btn.textContent = doneToday ? '✓ Сьогодні зроблено' : 'Я позанимався сьогодні';
+  btn.textContent = doneToday ? '✓ Сьогодні зроблено' : 'Я позаймався сьогодні';
   btn.classList.toggle('done', doneToday);
 
   const warn = document.getElementById('streakWarn');
